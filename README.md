@@ -1,6 +1,6 @@
 # Red Hat Storage / GlusterFS ON AZURE
 
-> By Khaled Elbedri, November, 2016
+> By Khaled Elbedri (@khaled99b), November, 2016
 
 ## Overview and Pre-Requisites
 
@@ -51,22 +51,21 @@ We will use Azure virtual machines to create a two nodes GlusterFS cluster. A Li
 
 Servers:
 
-|  |  |
-| ------------- | -------------- |
 | Node1         | Node2          |
+| ------------- | -------------- |
 | CentOS 7.2    | CentOS 7.2     |
 
 
 Clients:
 
-|  |  |
-| ------------- | ------------------------- |
 | Node3         | Windows-client            |
+| ------------- | ------------------------- |
 | CentOS 7.2    | Windows Server 2008 x64   |
 
 
 ![Fig1: GlusterFS simplified architecture](images/fig1.png)
-[Fig1: GlusterFS simplified architecture]
+
+*[Fig1: GlusterFS simplified architecture]*
 
 To add another layer of resiliency to our architecture, we will provision GlusterFS cluster nodes into an Azure availability set.
 
@@ -89,7 +88,7 @@ An Azure availability set provides a level of fault tolerance to the instances i
 
 3. Create an `ssh` keypair with a blank passphrase 
 
-```
+```shell
 # ssh-keygen
     Generating public/private rsa key pair.
     Enter file in which to save the key (/home/azureuser/.ssh/id_rsa):
@@ -409,7 +408,8 @@ The two most common volume types are *distributed* and *distributed-replicate
 Now that we have created the type GlusterFS volumes, we need to verify that the exported storage could be mounted by various operating systems. In a typical use case, we could have a cluster of multiple VMs sharing the exported storage as illustrated by the following figure. For instance, the cluster could be created by Azure scale sets. With such architecture, Red Hat storage / GlusterFS will provide highly available, persistent, elastic storage to be shared among the nodes.
 
 ![Fig2: GlusterFs as a backend to compute cluster](images/fig2.png)
-[Fig2: GlusterFs as a backend to compute cluster]
+
+*[Fig2: GlusterFs as a backend to compute cluster]*
 
 GlusterFS could be mounted on Linux systems using the native glusterfs client, or as an *NFS* or *samba* share. On windows, the filesystem could be exported with *samba* service and mounted as CIFS. 
 
