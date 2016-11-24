@@ -2,6 +2,30 @@
 
 > By Khaled Elbedri, November, 2016
 
+## Table of Contents
+
+   * [Red Hat Storage / GlusterFS ON AZURE](#red-hat-storage--glusterfs-on-azure)
+      * [Overview and Pre-Requisites](#overview-and-pre-requisites)
+         * [Pre-requisites](#pre-requisites)
+         * [Topics Covered](#topics-covered)
+      * [Inroduction to red hat storage](#inroduction-to-red-hat-storage)
+      * [Lab1: Planning the deployment on Azure](#lab1-planning-the-deployment-on-azure)
+         * [Terminology:](#terminology)
+         * [Lab configuration:](#lab-configuration)
+      * [Lab2: Creating the Bricks](#lab2-creating-the-bricks)
+      * [Lab3: Configuring storage Pool](#lab3-configuring-storage-pool)
+      * [Lab4: High availability Glusterfs Volumes](#lab4-high-availability-glusterfs-volumes)
+      * [Lab5: Glusterfs clients configuration](#lab5-glusterfs-clients-configuration)
+         * [Access from Linux via GlusterFS Native Client](#access-from-linux-via-glusterfs-native-client)
+         * [Access from Linux via GlusterFS via NFS](#access-from-linux-via-glusterfs-via-nfs)
+         * [Access from Windows/Linux machines via CIFS](#access-from-windowslinux-machines-via-cifs)
+      * [Lab6: Extend Glusterfs system without downtime](#lab6-extend-glusterfs-system-without-downtime)
+      * [Lab8: Installing the graphical console](#lab8-installing-the-graphical-console)
+      * [Additional Resources and References](#additional-resources-and-references)
+         * [Useful Links](#useful-links)
+         * [Microsoft and Red Hat partnership](#microsoft-and-red-hat-partnership)
+      * [License](#license)
+
 ## Overview and Pre-Requisites
 
 
