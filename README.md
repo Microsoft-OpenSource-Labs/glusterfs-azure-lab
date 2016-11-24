@@ -49,16 +49,24 @@ Azure offers multiple cloud solutions either as infrastructure-as-a-service (Iaa
 
 We will use Azure virtual machines to create a two nodes GlusterFS cluster. A Linux and Windows clients will be used to demonstrate mounting and consuming software defined storage exported by the GlusterFS cluster
 
-|  |  |  |
-| ------------ | ------------- | -------------- |
-| Servers      | Node1         | Node2          |
-|              | CentOS 7.2    | CentOS 7.2     |
-| Clients      | Node3         | Windows-client |
-|              | CentOS 7.2    | Windows Server 2008 x64 |
+Servers:
+
+|  |  |
+| ------------- | -------------- |
+| Node1         | Node2          |
+| CentOS 7.2    | CentOS 7.2     |
+
+
+Clients:
+
+|  |  |
+| ------------- | ------------------------- |
+| Node3         | Windows-client            |
+| CentOS 7.2    | Windows Server 2008 x64   |
 
 
 ![Fig1: GlusterFS simplified architecture](images/fig1.png)
-
+[Fig1: GlusterFS simplified architecture]
 
 To add another layer of resiliency to our architecture, we will provision GlusterFS cluster nodes into an Azure availability set.
 
@@ -66,13 +74,13 @@ An Azure availability set provides a level of fault tolerance to the instances i
 
 1. Start a *Bash* session and login to your Azure account
 
-```bash
+```
 # azure login
 ```
 
 2. Make sure the Azure CLI is using Resource Manager mode
 
-```bash
+```
 # azure config mode arm
     info:    Executing command config mode
     info:    New mode is arm
@@ -81,7 +89,7 @@ An Azure availability set provides a level of fault tolerance to the instances i
 
 3. Create an `ssh` keypair with a blank passphrase 
 
-```bash
+```
 # ssh-keygen
     Generating public/private rsa key pair.
     Enter file in which to save the key (/home/azureuser/.ssh/id_rsa):
@@ -95,7 +103,7 @@ An Azure availability set provides a level of fault tolerance to the instances i
 
 4. Create a new Azure resource group `glusterfsRG` in your preferred region
 
-```bash
+```
 # azure group create glusterfsRG northeurope
     info:    Executing command group create
     + Getting resource group glusterfsRG
@@ -112,7 +120,7 @@ An Azure availability set provides a level of fault tolerance to the instances i
 
 5. Create a new availability set `glusteras`
 
-```bash
+```
 # azure availset create glusterfsRG glusteras northeurope
     info:    Executing command availset create
     + Looking up the availability set "glusteras"
@@ -122,26 +130,26 @@ An Azure availability set provides a level of fault tolerance to the instances i
 
 6. Create Linux CentOS virtual machines *node1* and replace RANDOMSTRING by any random string, to be unique.
 
-```bash
+```
 # azure vm create glusterfsRG node1 northeurope -F gluster-vnet -j gluster-snet -f nic-node1 -P 10.0.0.0/16 -k 10.0.1.0/24 -i node1-pub -w node1glusterRANDOMSTRING -y Linux -Q OpenLogic:CentOS:7.2:latest -u azureuser -M .ssh/id_rsa.pub -r glusteras
 ```
 
 7. Create similar virtual machine *node2* in the same vnet/subnet as *node1*.  Replace RANDOMSTRING by any random string, to be unique
 
-```bash
+```
 # azure vm create glusterfsRG node2 northeurope -F gluster-vnet -j gluster-snet -f nic-node2 -i node2-pub -w node2glusterRANDOMSTRING -y Linux -Q OpenLogic:CentOS:7.2:latest -u azureuser -M .ssh/id_rsa.pub -r glusteras
 ```
 
 8. Show the two provisioned nodes
 
-```bash
+```
 # azure vm list glusterfsRG | grep node
 # azure vm show glusterfsRG node1
 ```
 
 9. Note the public IP addresses of your newly created vms
 
-```bash
+```
 # azure vm list-ip-address | grep GLUSTERFSRG
     data:    GLUSTERFSRG        node1            52.149.219.230
     data:    GLUSTERFSRG        node2            52.154.143.136	
@@ -149,7 +157,7 @@ An Azure availability set provides a level of fault tolerance to the instances i
 
 10. Ssh to the *node1* and *node2* and make sure to install any available updates
 
-```bash
+```
 # ssh -i .ssh/id_rsa azureuser@NODE-PubIP
     [node1]# sudo yum update -y
 ```
@@ -167,13 +175,13 @@ gpgcheck=0
 
 12. Install the latest *EPEL* repository from *fedoraproject.org* to resolve all dependencies: 
 
-```bash
+```
 [node1] # sudo yum -y install http://dl.fedoraproject.org/pub/epel/epel-release-latest-7.noarch.rpm
 ```
 
 13. Make sure both repositories are enabled by default: 
 
-```bash
+```
 [node1] # sudo yum repolist
     ... output omitted ...
     repo id            repo name                   status
@@ -188,7 +196,7 @@ gpgcheck=0
 
 14. Install *GlusterFS* Server and *Samba* packages
 
-```bash
+```
 [node1] # sudo yum install glusterfs-server samba -y
 ```
 
@@ -200,13 +208,13 @@ For simplicity reasons, we will use disks with 10Gb capacity, only. The array on
 
 1.	Attach 2 x 10 GB data disks to node1
 
-```bash
+```
 # for n in {1..2}; do azure vm disk attach-new glusterfsRG node1 10; done
 ```
 
 2. List the system’s partition table and make sure you have 2 new disks (`/dev/sdc` and `/dev/sdd`)
 
-```bash
+```
 [node1] # sudo fdisk -l
     ... output omitted ...
     Device Boot      Start         End      Blocks   Id  System
@@ -221,7 +229,7 @@ For simplicity reasons, we will use disks with 10Gb capacity, only. The array on
 
 3. Combine the virtual disks with `mdadm` allows the LUN to deliver IOPS beyond that of a single virtual disk. Use `mdadm` to combine disks to form a larger RAID0 disk.
 
-```bash
+```
 [node1] # sudo mdadm --create md0 --level=0 --chunk=256K --raid-devices=2 /dev/sdc /dev/sdd
     mdadm: Defaulting to version 1.2 metadata
     mdadm: array /dev/md/md0 started.
@@ -232,7 +240,7 @@ For simplicity reasons, we will use disks with 10Gb capacity, only. The array on
 
 4. Create the file system (*2 bricks*) that will be used to create the Glusterfs volume
 
-```bash
+```
 [node1] # sudo pvcreate --dataalignment 1024K /dev/md/md0
     Physical volume "/dev/md/md0" successfully created
 
@@ -255,13 +263,13 @@ For simplicity reasons, we will use disks with 10Gb capacity, only. The array on
 
 5. Format the bricks with *XFS* file system:
 
-```bash
+```
 [node1] # for n in {1..2}; do sudo mkfs.xfs /dev/glustervg-data/brick$n; done
 ```
 
 6. Create mount points and mount XFS bricks: 
 
-```bash
+```
 [node1] # sudo mkdir -p /bricks/brick{1,2}
 
 [node1] # for n in {1..2}; do sudo mount /dev/glustervg-data/brick$n /bricks/brick$n; done
@@ -276,7 +284,7 @@ For simplicity reasons, we will use disks with 10Gb capacity, only. The array on
 
 8. Mount the created bricks
 
-```bash
+```
 [node1] # sudo mount -a
 [node1] # sudo df -h
     ... output omitted ...
@@ -293,7 +301,7 @@ In this section, we will enable the *GlusterFS* cluster on *node1* and *node2*.
 
 1. Enable and start `glusterfsd.service` on *node1*:
 
-```bash
+```
 [node1] # sudo systemctl enable glusterd.service
     Created symlink from /etc/systemd/system/multi-user.target.wants/glusterd.service to /usr/lib/systemd/system/glusterd.service. 
 
@@ -304,14 +312,14 @@ In this section, we will enable the *GlusterFS* cluster on *node1* and *node2*.
 
 3. Use `gluster` command to connect the second *GlusterFS node2* and create a Trusted Pool (Storage Cluster). You don’t have to run the same command on the other node
 
-```bash
+```
 [node1] # sudo gluster peer probe node2
     peer probe: success.
 ```
 
 4. Verify the cluster peer:
 
-```bash
+```
 [node1] # sudo gluster peer status
     Number of Peers: 1
     Hostname: node2
@@ -337,13 +345,13 @@ The two most common volume types are *distributed* and *distributed-replicate
 
 1. First, create two sub-directories mount points, `/bricks/brick1/repvol` and `/bricks/brick1/disvol`. 
 
-```bash
+```
 [node1] # sudo mkdir /bricks/brick1/repvol /bricks/brick2/distvol
 ```
 
 2. Use the `/bricks/brick1` XFS partition on both nodes to create a highly available replicated volume, *glustervol1*. You don’t have to run the same command on *node2*:
 
-```bash
+```
 [node1] # sudo gluster volume create glustervol1 replica 2 transport tcp node1:/bricks/brick1/repvol node2:/bricks/brick1/repvol
     volume create: glustervol1: success: please start the volume to access data
 
@@ -353,7 +361,7 @@ The two most common volume types are *distributed* and *distributed-replicate
 
 3. Use the `/bricks/brick2` XFS partition on both nodes to create a big distributed volume, *glustervol2*. You don’t have to run the same command on *node2*:
 
-```bash
+```
 [node1] # sudo gluster volume create glustervol2 transport tcp node1:/bricks/brick2/distvol node2:/bricks/brick2/distvol
     volume create: glustervol2: success: please start the volume to access data
 
@@ -363,7 +371,7 @@ The two most common volume types are *distributed* and *distributed-replicate
 
 4. Verify the newly created GlusterFS Volumes:
 
-```bash
+```
 [node1] # sudo gluster volume info all
     Volume Name: glustervol1
     Type: Replicate
@@ -401,6 +409,7 @@ The two most common volume types are *distributed* and *distributed-replicate
 Now that we have created the type GlusterFS volumes, we need to verify that the exported storage could be mounted by various operating systems. In a typical use case, we could have a cluster of multiple VMs sharing the exported storage as illustrated by the following figure. For instance, the cluster could be created by Azure scale sets. With such architecture, Red Hat storage / GlusterFS will provide highly available, persistent, elastic storage to be shared among the nodes.
 
 ![Fig2: GlusterFs as a backend to compute cluster](images/fig2.png)
+[Fig2: GlusterFs as a backend to compute cluster]
 
 GlusterFS could be mounted on Linux systems using the native glusterfs client, or as an *NFS* or *samba* share. On windows, the filesystem could be exported with *samba* service and mounted as CIFS. 
 
@@ -411,13 +420,13 @@ For simplicity reasons, we will deploy single Linux and Windows VMs. Then we wil
 
 1. Provision a Linux CentOS vm, *node3*
 
-```bash
+```
 # azure vm create glusterfsRG node3 northeurope -F gluster-vnet -j gluster-snet -f nic-node3 -i node2-pub -w node3glusterRANDOMSTRING -y Linux -Q OpenLogic:CentOS:7.2:latest -u azureuser -M .ssh/id_rsa.pub
 ```
 
 2. Ssh into node3 and install glusterfs native client tools and some additional packages. All required packages are available by default in the CentOS 7 Base repository.
 
-```bash
+```
 # ssh -i .ssh/id_rsa azureuser@node3	
 
 [node3] # sudo yum install glusterfs-fuse attr httpd -y
@@ -427,7 +436,7 @@ For simplicity reasons, we will deploy single Linux and Windows VMs. Then we wil
 
 4. Create a mount point and mount GlusterFS Volumes on *node3*:
 
-```bash
+```
 [node3] # sudo mkdir -p /shared/big
 
 [node3] # sudo mount -t glusterfs node1:/glustervol1 /var/www/html
@@ -437,7 +446,7 @@ For simplicity reasons, we will deploy single Linux and Windows VMs. Then we wil
 
 5. Report the size of the shared file systems and explain the difference:
 
-```bash
+```
 [node3] # sudo df -h
     ... output omitted ...
     node1:/glustervol1  5.0G   33M  5.0G   1% /var/www/html
@@ -446,7 +455,7 @@ For simplicity reasons, we will deploy single Linux and Windows VMs. Then we wil
 
 6. Enable and start Apache on *node3*
 
-```bash
+```
 [node3]# sudo systemctl enable httpd
     
 [node3]# sudo systemctl start httpd
@@ -454,19 +463,19 @@ For simplicity reasons, we will deploy single Linux and Windows VMs. Then we wil
 
 7. Point your web browser to the public IP of *node3* or use `curl` to confirm that the website is active. If curl is not installed, you can install with `sudo yum install curl -y`.
 
-```bash
+```
 # curl http://node3(PubIP)
 ```
 
 8. Copy some content to the shared volume
 
-```bash
+```
 [node3]# sudo cp /etc/passwd /share/big
 ```
 
 9. Stop *node3*. Is the website still available? Can you list the contents of `/share/big`? Can you copy in some new contents? Can you explain what happened?
 
-```bash
+```
 # azure vm stop glusterfsRG node1	
 
 # curl://http:node3(pubIP)
@@ -494,7 +503,7 @@ It is recommended to reboot all glusterfs nodes before continuing.
 
 12. Mount GlusterFS Volumes via NFS:
 
-```bash
+```
 [node3] # sudo mount -t nfs node1:/glustervol2 /share/big
 
 [node3] # sudo mount
@@ -513,13 +522,13 @@ node1:/glustervol2       /mnt  nfs   defaults,_netdev  0  0
 
 14. Install/update the *samba* required packages on both cluster nodes: 
 
-```bash
+```
 [node1] # sudo yum install samba samba-client samba-common samba-vfs-glusterfs -y
 ```
 
 15. Start/enable Samba services. 
 
-```bash
+```
 [node1] # sudo systemctl start smb.service
 [node1] # sudo systemctl enable smb.service
 [node1] # sudo systemctl start nmb.service
@@ -531,7 +540,7 @@ Once a new GlusterFS Volume is created/started, it is added to the Samba configu
 
 16. Find the GlusterFS shares in `/etc/samba/smb.conf`
 
-```bash
+```
 [node1] # sudo cat /etc/samba/smb.conf
     ... output omitted ...
     [gluster-glustervol1]
@@ -557,14 +566,14 @@ Once a new GlusterFS Volume is created/started, it is added to the Samba configu
 
 17. Add a new parameter `kernel share modes = No` to the GlusterFS samba configuration.
 
-```bash
+```
 [gluster-glustervol2]
 kernel share modes = No
 ```
 
 18. Prepare the *glustervol2* GlusterFS Volume for Samba:
 
-```bash
+```
 [node1] # sudo gluster volume set glustervol2 stat-prefetch off
     volume set: success
 
@@ -577,19 +586,19 @@ kernel share modes = No
 
 19. Add the following line to `/etc/glusterfs/glusterd.vol` on *node1* and *node2*:
 
-```bash
+```
 option rpc-auth-allow-insecure on
 ```
 
 20. Restart *glusterfs* service: 
 
-```bash
+```
 [node1] # systemctl restart glusterd.service
 ```
 
 21. Add a new samba user on *node1* and *node2*:
 
-```bash
+```
 [node1] # adduser sambauser
 
 [node1] # smbpasswd -a sambauser
@@ -600,14 +609,14 @@ option rpc-auth-allow-insecure on
 
 22. Restart Samba: 
 
-```bash
+```
 [node1] # systemctl restart smb.service
 [node1] # systemctl restart nmb.service
 ```
 
 23. On *node3*, mount GlusterFS Volume via CIFS (Samba) and verify the file system
 
-```bash
+```
 [node3] # yum install cifs-utils -y
 
 [node3] # mount -t cifs \\\\node1PrivateIP\\gluster-glustervol2 /mnt/ -o user=sambauser,pass=mypassword
@@ -633,7 +642,7 @@ GlusterFS offers the option to extend the shared filesystem without down time. T
 
 1. Show the volume parameters before the extension:
 
-```bash
+```
 [node1] # gluster volume info all
     Volume Name: glustervol1
     Type: Replicate
@@ -651,27 +660,27 @@ GlusterFS offers the option to extend the shared filesystem without down time. T
 
 3. To extend the *glustervol1* Volume, use the two XFS bricks – newly created.
 
-```bash
+```
 [node1] # mount |grep brick3
     /dev/mapper/vg_gluster-brick3 on /bricks/brick3 type xfs (rw,relatime,seclabel,attr2,inode64,noquota)
 ```
 
 4. Create a necessary the sub-directory mount point `/bricks/brick3/repdistvol`
 
-```bash
+```
 [node1] # mkdir /bricks/brick3/repdistvol
 ```
 
 5. Extend the GlusterFS Volume without any downtime:
 
-```bash
+```
 # gluster volume add-brick glustervol1 gluster1.example.com:/bricks/brick3/repdistvol gluster2.example.com:/bricks/brick3/repdistvol
     volume add-brick: success
 ```
 
 6. Verify the Volume:
 
-```bash
+```
 # gluster volume info glustervol1
     Volume Name: glustervol1
     Type: Distributed-Replicate
@@ -694,13 +703,13 @@ The *ovirt* upstream project, provides a graphical management console that can b
 
 1. Install ovirt-engine by running
 
-```bash
+```
 [node3]# yum install ovirt-engine -y
 ```
 
 2. Once the installation is completed, set up *ovirt* with *gluster*.  The installer will take you through a series of interactive questions. Keep default values, but don’t setup the firewall.
 
-```bash
+```
 [node3]# engine-setup
 ```
 
@@ -710,7 +719,7 @@ The *ovirt* upstream project, provides a graphical management console that can b
 
 5. Well done! Now that you have accomplished all the required steps in this lab, you deserve a treat run:
 
-```bash
+```
 [node3]# yum install sl -y
 [node3]# sl
 ```
