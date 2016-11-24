@@ -4,10 +4,6 @@
 
 ## Overview and Pre-Requisites
 
-An Overview of the scope of the lab, any pre-requisites and topics covered on the lab should be clearly explained here.
-
-
-### Overview
 
 This lab describes the steps necessary to deploy highly available GlusterFs (Red Hat Storage) environment to Azure using a basic two-node CENTOS 7 configuration. GlusterFS which is the upstream project and considered to be a test bed incubator of Red Hat Storage. 
 
