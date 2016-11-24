@@ -1,6 +1,6 @@
 # Red Hat Storage / GlusterFS ON AZURE
 
-> By Khaled Elbedri (@khaled99b), November, 2016
+> By Khaled Elbedri, November, 2016
 
 ## Overview and Pre-Requisites
 
@@ -63,6 +63,7 @@ Clients:
 | CentOS 7.2    | Windows Server 2008 x64   |
 
 
+
 ![Fig1: GlusterFS simplified architecture](images/fig1.png)
 
 *[Fig1: GlusterFS simplified architecture]*
@@ -88,7 +89,7 @@ An Azure availability set provides a level of fault tolerance to the instances i
 
 3. Create an `ssh` keypair with a blank passphrase 
 
-```shell
+```
 # ssh-keygen
     Generating public/private rsa key pair.
     Enter file in which to save the key (/home/azureuser/.ssh/id_rsa):
