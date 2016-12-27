@@ -1,5 +1,5 @@
 #!/bin/bash
-echo "Preparing node2... \n"
+echo "Preparing node2... "
 # Update the system
 yum -y update 
 # Add the glusterfs epel yum repository 
