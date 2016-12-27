@@ -1,3 +1,4 @@
+
 #!/bin/bash
 echo "Preparing node2... "
 # Update the system
@@ -27,6 +28,8 @@ sudo mkdir -p /bricks/brick{1,2}
 for n in {1..2}; do sudo mount /dev/glustervg-data/brick$n /bricks/brick$n; done
 for n in {1..2}; do  echo "/dev/glustervg-data/brick$n  /bricks/brick$n    xfs     defaults    0 0" >> /etc/fstab; done
 mount -a
+#turn SELinux to permissive mode
+setenforce 0
 #Enable and start glusterd service
 systemctl enable glusterd
 systemctl start glusterd
